@@ -9,44 +9,88 @@ TODO:
 */
 
 
+
+
 class CanvasLib {
 
-	constructor(ctx, width, height) {
+	constructor(ctx, width, height, framerate) {
 		this.ctx = ctx;
 		this.width = width;
 		this.height = height;
+
+		// set additional parameters
+		this.inDragEvent = false;
+
+		// handle layering of shapes
+		this.layers = [];
+
+		// add grid
+		// NOTE: grid must always be first element
+		this.layers.push(new Grid(width, height, 20));
+
+		// start display loop
+		setInterval((function() {
+			this.ctx.clearRect(0, 0, width, height);
+			for (var i in this.layers) {
+				this.layers[i].draw(this.ctx);
+			}
+		}).bind(this), framerate);
 	}
 
-	drawCircle(x, y, radius) {
-		this.ctx.beginPath();
-		this.ctx.arc(x - radius, y - radius, radius,0 , 2 * Math.PI);
-		this.ctx.stroke();
+	/* HELPER METHODS */
+
+	sortPoints(x1, y1, x2, y2) {
+		// sorts x1, y1, x2, y2 to ensure that the two points
+		// returned are the top left and bottom right corners
+		var xmin = x1 < x2 ? x1 : x2;
+		var xmax = x1 > x2 ? x1 : x2;
+		var ymin = y1 < y2 ? y1 : y2;
+		var ymax = y1 > y2 ? y1 : y2;
+		return [xmin, ymin, xmax, ymax];
 	}
 
-	drawLine(x1, y1, x2, y2) {
-		this.ctx.moveTo(x1, y1);
-		this.ctx.lineTo(x2, y2);
-		this.ctx.stroke();
+	/* MOUSE ACTIONS */
+
+	handleClick(event) {
+		this.inDragEvent = true;
+		this.dragStart = {
+			x: event.clientX,
+			y: event.clientY
+		};
 	}
 
-	drawGrid(gap) {
+	handleMove(event) {
+		if (this.inDragEvent) {
 
-		// set line style
-		ctx.lineWidth = 1;
+			// remove previous rect from layers
+			if (this.layers.length > 1) {
+				this.layers.pop();
+			}
 
-		// draw vertical lines
-		for (var i = 0; i < this.width; i = i + gap) {
-			this.ctx.moveTo(i, 0);
-			this.ctx.lineTo(i, this.height);
-			this.ctx.stroke();
+			// add new rect
+			this.layers.push(new Rectangle(
+				this.sortPoints(
+					this.dragStart.x, 
+					this.dragStart.y, 
+					event.clientX, 
+					event.clientY
+				)
+			));
+
 		}
+	}
 
-		// draw horizontal lines
-		for (var j = 0; j < this.height; j = j + gap) {
-			this.ctx.moveTo(0, j);
-			this.ctx.lineTo(this.width, j);
-			this.ctx.stroke();
-		}
+	handleUp(event) {
+		this.inDragEvent = false;
+		// add final rect
+		this.layers.push(new Rectangle(
+			this.sortPoints(
+				this.dragStart.x, 
+				this.dragStart.y, 
+				event.clientX, 
+				event.clientY
+			)
+		));
 	}
 
 }

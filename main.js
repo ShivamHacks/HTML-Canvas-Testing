@@ -12,9 +12,11 @@ window.onload = function() {
 	c.style.height = window.innerHeight;
 	var ctx = c.getContext("2d");
 
-	var lib = new CanvasLib(ctx, c.width, c.height);
+	var lib = new CanvasLib(ctx, c.width, c.height, 10);
 
-	lib.drawCircle(100, 100, 10);
-	lib.drawGrid(10);
+	// register mouse listener
+	document.onmousedown = lib.handleClick.bind(lib);
+	document.onmousemove = lib.handleMove.bind(lib);
+	document.onmouseup = lib.handleUp.bind(lib);
 
 };
